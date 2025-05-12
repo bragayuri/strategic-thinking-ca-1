@@ -1,22 +1,21 @@
 # app_streamlit.py
 
-# ── Importing Libraries ─────────────────────────────────────
-import streamlit as st  # For creating the web app UI
-import pandas as pd     # For data manipulation
-import numpy as np      # For numerical operations
-import joblib           # For loading the trained model
-import datetime         # For working with dates
-import warnings         # For handling warnings
+import streamlit as st
+import pandas as pd
+import numpy as np
+import joblib
+import datetime
+import warnings
 
-# For loading and executing Jupyter Notebooks
 import nbformat
 from nbformat.v4 import new_code_cell
 from nbclient import NotebookClient
 from nbconvert import HTMLExporter
 import streamlit.components.v1 as components
+from feature_engineer import add_features
+
 
 # ── 1. GLOBAL CONFIG & CSS ────────────────────────────────
-# Sets up the Streamlit page configuration and custom CSS for styling
 st.set_page_config(page_title="Used Car Price Tool", layout="wide", page_icon="🚘")
 st.markdown("""
   <style>
@@ -27,30 +26,27 @@ st.markdown("""
       border-radius: 8px;
       padding: 1rem;
       width: fit-content !important;
-      margin: 1rem auto !important;
+      margin: 1rem auto !important;    /* center horizontally and add top/bottom space */
     }
   </style>
 """, unsafe_allow_html=True)
 
 # ── 2. PAGE NAVIGATION ─────────────────────────────────────
-# Sidebar radio button to switch between different app pages
 pages = ["Home", "Dataset", "Notebook"]
 choice = st.sidebar.radio("Go to", pages)
 
 # ── 3. MODEL & DATA LOADING ────────────────────────────────
-# Load the machine learning model (cached for performance)
 @st.cache_data
 def load_model():
-    return joblib.load("car_price_full_pipeline.pkl")
+    return joblib.load("car_price_stacked_pipeline.pkl")
 
-# Load and clean the dataset for dropdown options (cached)
 @st.cache_data
 def load_options():
     df = pd.read_csv("new_vehicle_all_price.csv")
     df.rename(columns={
         "manufacturer": "make",
         "fuel": "fuel_type",
-        "odometer": "Kilometer",
+        "odometer": "Kilometer",  
         "price": "price"
     }, inplace=True)
     df = df[['make','model','fuel_type','transmission','year']].dropna()
@@ -58,12 +54,10 @@ def load_options():
         df[c] = df[c].str.title()
     return df
 
-# Load data and model at runtime
 df_valid = load_options()
 model    = load_model()
 
 # ── 4. HOME PAGE ────────────────────────────────────────────
-# UI for the Home page where user inputs car details and gets a price prediction
 if choice == "Home":
     with st.sidebar:
         st.header("Vehicle Details")
@@ -78,7 +72,6 @@ if choice == "Home":
     st.title("Used Car Price Estimator")
     st.write("Fill the sidebar and hit **Calculate Price**.")
 
-    # If user clicks the button, validate inputs and make prediction
     if go:
         errs = []
         if not (1970 <= year <= datetime.datetime.now().year):
@@ -89,7 +82,6 @@ if choice == "Home":
             for e in errs:
                 st.warning(e)
         else:
-            # Create input DataFrame from user selections
             df_in = pd.DataFrame([{
                 "make": make.lower(),
                 "model": mod.lower(),
@@ -99,15 +91,14 @@ if choice == "Home":
                 "Kilometer": km
             }])
             try:
-                # Make prediction and show result
                 logp  = model.predict(df_in)[0]
                 price = np.expm1(logp)
+                # DISPLAY METRIC DIRECTLY UNDER THE TEXT, CENTERED
                 st.metric("Estimated Price", f"$ {price:,.2f}")
             except Exception as e:
                 st.error(f"Prediction error: {e}")
 
 # ── 5. DATASET PAGE ─────────────────────────────────────────
-# UI for viewing the dataset and its basic statistics
 elif choice == "Dataset":
     st.title("Dataset Description")
     st.write("""
@@ -120,15 +111,13 @@ elif choice == "Dataset":
     st.subheader("Summary Statistics")
     st.write(df.describe())
 
-# ── 6. NOTEBOOK PAGE (with executed outputs) ────────────────
-# UI for rendering a Jupyter Notebook with outputs inside the Streamlit app
+# ── 6. NOTEBOOK PAGE (with executed outputs) ──────────────────
 else:
     st.title("Executed Notebook")
     st.write("Rendering `vehicle-prediction-tool.ipynb` with its outputs below:")
 
     try:
-        # Load and execute the notebook, then render it as HTML
-        nb = nbformat.read("vehicle-prediction-tool.ipynb", as_version=4)
+        nb = nbformat.read("prediction-tool-final.ipynb", as_version=4)
         nb.cells.insert(0, new_code_cell("%matplotlib inline"))
         client = NotebookClient(nb, timeout=600, allow_errors=True)
         with warnings.catch_warnings():
@@ -138,7 +127,6 @@ else:
         body, _ = html_exporter.from_notebook_node(nb)
         components.html(body, height=800, scrolling=True)
 
-    # Handle errors like missing notebook or execution issues
     except FileNotFoundError:
         st.error("`vehicle-prediction-tool.ipynb` not found.")
     except Exception as e:

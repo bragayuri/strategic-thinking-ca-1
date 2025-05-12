@@ -6,11 +6,12 @@ import numpy as np
 import joblib
 from feature_engineer import FeatureEngineer  # Custom module for feature engineering 
 
+
 # Creating an instance of the FastAPI application
 app = FastAPI()
 
 # Loading the trained machine learning pipeline from a file
-model = joblib.load('car_price_full_pipeline.pkl')
+model = joblib.load('car_price_stacked_pipeline.pkl')
 
 # Defining the expected input structure for a car using Pydantic for validation
 class CarInput(BaseModel):
