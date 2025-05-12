@@ -1,0 +1,8 @@
+# requirements.txt
+streamlit
+pandas
+numpy
+joblib
+nbformat
+nbclient
+nbconvert
