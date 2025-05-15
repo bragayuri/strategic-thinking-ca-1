@@ -118,7 +118,26 @@ if choice == "Home":
             try:
                 logp  = model.predict(df_in)[0]
                 price = np.expm1(logp)
-                st.metric("Estimated Price", f"$ {price:,.2f}")
+                price_display = f"${price:,.2f}"
+                st.markdown(f"""
+                            <div style="
+                           display: flex;
+                           justify-content: start;
+                            margin-top: 2rem;
+                           ">
+                       <div style="
+                       background-color: #111;
+                       padding: 1.5rem 3rem;
+                       border-radius: 12px;
+                       color: white;
+                       font-size: 2.5rem;
+                       font-weight: bold;
+                       box-shadow: 0 0 12px rgba(0,255,174,0.1);
+                       ">
+                       Estimated Price: {price_display}
+                    </div>
+               </div>
+""", unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Prediction error: {e}")
 
