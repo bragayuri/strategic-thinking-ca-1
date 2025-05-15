@@ -37,7 +37,7 @@ pages = ["Home", "Dataset", "Notebook"]
 choice = st.sidebar.radio("Go to", pages)
 
 # ── 3. MODEL & DATA LOADING ────────────────────────────────
-@st.cache_data
+@st.cache_resource
 def load_model():
     IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
     local_path = "car_price_stacked_pipeline.pkl"
@@ -46,11 +46,18 @@ def load_model():
         url = "https://drive.google.com/uc?export=download&id=1cpMyNSxLTBVixk-2BrjBlZP8nDd6-6YH"
         if not os.path.exists(local_path):
             with st.spinner("🔽 Baixando modelo do Google Drive..."):
-                r = requests.get(url)
+                response = requests.get(url)
                 with open(local_path, "wb") as f:
-                    f.write(r.content)
+                    f.write(response.content)
+                st.write("✅ Modelo baixado com sucesso.")
+                st.write(f"Tamanho do arquivo: {os.path.getsize(local_path)} bytes")
+
+    # Verifica se o arquivo existe e tem tamanho mínimo esperado (~1MB)
+    if not os.path.exists(local_path) or os.path.getsize(local_path) < 1000000:
+        raise RuntimeError("🚨 Modelo não foi baixado corretamente. Arquivo corrompido ou vazio.")
 
     return joblib.load(local_path)
+
 
 @st.cache_data
 def load_options():
