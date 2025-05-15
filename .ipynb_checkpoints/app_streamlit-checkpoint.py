@@ -12,6 +12,7 @@ import nbformat
 from nbconvert import HTMLExporter
 import streamlit.components.v1 as components
 from feature_engineer import add_features
+import gdown
 
 # 1.GENERAL CONFIG AND LAYOUT DESIGN
 st.set_page_config(page_title="Used Car Price Tool", layout="wide", page_icon="🚘")
@@ -40,25 +41,26 @@ choice = st.sidebar.radio("Go to", pages)
 
 # 3. LOAD DATA AND MODEL
 @st.cache_resource
+
+
 def load_model():
     IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
     local_path = "car_price_stacked_pipeline.pkl"
 
     if IS_CLOUD:
-        url = "https://drive.google.com/uc?export=download&id=1cpMyNSxLTBVixk-2BrjBlZP8nDd6-6YH"
+        file_id = "1cpMyNSxLTBVixk-2BrjBlZP8nDd6-6YH"
+        url = f"https://drive.google.com/uc?id={file_id}"
         if not os.path.exists(local_path):
-            with st.spinner("🔽 Download from Drive..."):
-                response = requests.get(url)
-                with open(local_path, "wb") as f:
-                    f.write(response.content)
-                st.write("✅ Model is downloaded.")
-                st.write(f"Tamanho do arquivo: {os.path.getsize(local_path)} bytes")
+            with st.spinner("🔽 Baixando modelo do Google Drive via gdown..."):
+                gdown.download(url, local_path, quiet=False)
+                st.write("✅ Modelo baixado com sucesso.")
+                st.write(f"Tamanho: {os.path.getsize(local_path)} bytes")
 
-    # Check if file was dowloaded correctly (~1MB)
     if not os.path.exists(local_path) or os.path.getsize(local_path) < 1000000:
-        raise RuntimeError("🚨 Model was not downloaded properly")
+        raise RuntimeError("🚨 Modelo corrompido ou não baixado corretamente")
 
     return joblib.load(local_path)
+
 
 
 @st.cache_data

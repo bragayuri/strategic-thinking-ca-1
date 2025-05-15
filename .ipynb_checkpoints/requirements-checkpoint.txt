@@ -8,4 +8,5 @@ nbclient
 nbconvert
 scikit-learn
 dill
+gdown
 
