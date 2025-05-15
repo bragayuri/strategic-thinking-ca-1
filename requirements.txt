@@ -7,3 +7,5 @@ nbformat
 nbclient
 nbconvert
 scikit-learn
+dill
+
