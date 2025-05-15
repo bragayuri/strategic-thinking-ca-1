@@ -6,6 +6,8 @@ import numpy as np
 import joblib
 import datetime
 import warnings
+import os
+import requests
 
 import nbformat
 from nbformat.v4 import new_code_cell
@@ -13,7 +15,6 @@ from nbclient import NotebookClient
 from nbconvert import HTMLExporter
 import streamlit.components.v1 as components
 from feature_engineer import add_features
-
 
 # ── 1. GLOBAL CONFIG & CSS ────────────────────────────────
 st.set_page_config(page_title="Used Car Price Tool", layout="wide", page_icon="🚘")
@@ -38,7 +39,18 @@ choice = st.sidebar.radio("Go to", pages)
 # ── 3. MODEL & DATA LOADING ────────────────────────────────
 @st.cache_data
 def load_model():
-    return joblib.load("car_price_stacked_pipeline.pkl")
+    IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
+    local_path = "car_price_stacked_pipeline.pkl"
+
+    if IS_CLOUD:
+        url = "https://drive.google.com/uc?export=download&id=1cpMyNSxLTBVixk-2BrjBlZP8nDd6-6YH"
+        if not os.path.exists(local_path):
+            with st.spinner("🔽 Baixando modelo do Google Drive..."):
+                r = requests.get(url)
+                with open(local_path, "wb") as f:
+                    f.write(r.content)
+
+    return joblib.load(local_path)
 
 @st.cache_data
 def load_options():
@@ -93,7 +105,6 @@ if choice == "Home":
             try:
                 logp  = model.predict(df_in)[0]
                 price = np.expm1(logp)
-                # DISPLAY METRIC DIRECTLY UNDER THE TEXT, CENTERED
                 st.metric("Estimated Price", f"$ {price:,.2f}")
             except Exception as e:
                 st.error(f"Prediction error: {e}")
