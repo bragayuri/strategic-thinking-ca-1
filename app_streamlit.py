@@ -46,12 +46,9 @@ def load_model():
     file_id = "1cpMyNSxLTBVixk-2BrjBlZP8nDd6-6YH"
     url = f"https://drive.google.com/uc?id={file_id}"
 
-    # Se já baixou uma vez, não baixa de novo
     if not os.path.exists(local_path) or os.path.getsize(local_path) < 1000000:
-        with st.spinner("🔽 Baixando modelo do Google Drive via gdown..."):
+        with st.spinner("🔽 Downloading model..."):
             gdown.download(url, local_path, quiet=False)
-            st.success("✅ Modelo baixado com sucesso.")
-            st.info(f"Tamanho: {os.path.getsize(local_path)} bytes")
 
     return joblib.load(local_path)
 
