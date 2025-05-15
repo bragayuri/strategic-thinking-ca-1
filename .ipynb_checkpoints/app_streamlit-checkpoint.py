@@ -1,5 +1,4 @@
 # app_streamlit.py
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,13 +9,11 @@ import os
 import requests
 
 import nbformat
-from nbformat.v4 import new_code_cell
-from nbclient import NotebookClient
 from nbconvert import HTMLExporter
 import streamlit.components.v1 as components
 from feature_engineer import add_features
 
-# ── 1. GLOBAL CONFIG & CSS ────────────────────────────────
+# 1.GENERAL CONFIG AND LAYOUT DESIGN
 st.set_page_config(page_title="Used Car Price Tool", layout="wide", page_icon="🚘")
 st.markdown("""
   <style>
@@ -28,7 +25,7 @@ st.markdown("""
       padding: 1rem;
       width: fit-content !important;
       margin: 1rem auto !important;
-      color: black !important; /* força contraste */
+      color: black !important; 
     }
     .element-container:has(.stMetric) {
       display: flex;
@@ -37,12 +34,11 @@ st.markdown("""
   </style>
 """, unsafe_allow_html=True)
 
-
-# ── 2. PAGE NAVIGATION ─────────────────────────────────────
+# 2. PAGE NAV
 pages = ["Home", "Dataset", "Notebook"]
 choice = st.sidebar.radio("Go to", pages)
 
-# ── 3. MODEL & DATA LOADING ────────────────────────────────
+# 3. LOAD DATA AND MODEL
 @st.cache_resource
 def load_model():
     IS_CLOUD = os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
@@ -51,16 +47,16 @@ def load_model():
     if IS_CLOUD:
         url = "https://drive.google.com/uc?export=download&id=1cpMyNSxLTBVixk-2BrjBlZP8nDd6-6YH"
         if not os.path.exists(local_path):
-            with st.spinner("🔽 Baixando modelo do Google Drive..."):
+            with st.spinner("🔽 Download from Drive..."):
                 response = requests.get(url)
                 with open(local_path, "wb") as f:
                     f.write(response.content)
-                st.write("✅ Modelo baixado com sucesso.")
+                st.write("✅ Model is downloaded.")
                 st.write(f"Tamanho do arquivo: {os.path.getsize(local_path)} bytes")
 
-    # Verifica se o arquivo existe e tem tamanho mínimo esperado (~1MB)
+    # Check if file was dowloaded correctly (~1MB)
     if not os.path.exists(local_path) or os.path.getsize(local_path) < 1000000:
-        raise RuntimeError("🚨 Modelo não foi baixado corretamente. Arquivo corrompido ou vazio.")
+        raise RuntimeError("🚨 Model was not downloaded properly")
 
     return joblib.load(local_path)
 
@@ -82,7 +78,7 @@ def load_options():
 df_valid = load_options()
 model    = load_model()
 
-# ── 4. HOME PAGE ────────────────────────────────────────────
+# 4. MAIN PAGE 
 if choice == "Home":
     with st.sidebar:
         st.header("Vehicle Details")
@@ -120,28 +116,28 @@ if choice == "Home":
                 price = np.expm1(logp)
                 price_display = f"${price:,.2f}"
                 st.markdown(f"""
-                            <div style="
-                           display: flex;
-                           justify-content: start;
-                            margin-top: 2rem;
-                           ">
-                       <div style="
-                       background-color: #111;
-                       padding: 1.5rem 3rem;
-                       border-radius: 12px;
-                       color: white;
-                       font-size: 2.5rem;
-                       font-weight: bold;
-                       box-shadow: 0 0 12px rgba(0,255,174,0.1);
-                       ">
-                       Estimated Price: {price_display}
+                    <div style="
+                       display: flex;
+                       justify-content: start;
+                       margin-top: 2rem;
+                    ">
+                        <div style="
+                            background-color: #111;
+                            padding: 1.5rem 3rem;
+                            border-radius: 12px;
+                            color: white;
+                            font-size: 2.5rem;
+                            font-weight: bold;
+                            box-shadow: 0 0 12px rgba(0,255,174,0.1);
+                        ">
+                            Estimated Price: {price_display}
+                        </div>
                     </div>
-               </div>
-""", unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Prediction error: {e}")
 
-# ── 5. DATASET PAGE ─────────────────────────────────────────
+# 5. DATA PAGE
 elif choice == "Dataset":
     st.title("Dataset Description")
     st.write("""
@@ -154,23 +150,19 @@ elif choice == "Dataset":
     st.subheader("Summary Statistics")
     st.write(df.describe())
 
-# ── 6. NOTEBOOK PAGE (with executed outputs) ──────────────────
+# 6.NOTEBOOK PAGE
 else:
     st.title("Executed Notebook")
     st.write("Rendering `vehicle-prediction-tool.ipynb` with its outputs below:")
 
     try:
-        nb = nbformat.read("prediction-tool-final.ipynb", as_version=4)
-        nb.cells.insert(0, new_code_cell("%matplotlib inline"))
-        client = NotebookClient(nb, timeout=600, allow_errors=True)
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "FigureCanvasAgg is non-interactive")
-            client.execute()
+        with open("prediction-tool-final.ipynb") as f:
+            nb = nbformat.read(f, as_version=4)
         html_exporter = HTMLExporter()
-        body, _ = html_exporter.from_notebook_node(nb)
-        components.html(body, height=800, scrolling=True)
+        (body, _) = html_exporter.from_notebook_node(nb)
+        components.html(body, height=1000, scrolling=True)
 
     except FileNotFoundError:
         st.error("`vehicle-prediction-tool.ipynb` not found.")
     except Exception as e:
-        st.error(f"Error running notebook: {e}")
+        st.error(f"Error loading notebook: {e}")
