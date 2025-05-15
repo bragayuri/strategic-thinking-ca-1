@@ -45,7 +45,7 @@ It allows dealerships to automate pricing decisions, reduce appraisal times from
 
 3. **(Optional) Run the Streamlit interface**
    ```bash
-    streamlit run streamlit_app.py
+    streamlit run app_streamlit.py
    ```
 
 4. **Make predictions via API**

@@ -27,10 +27,16 @@ st.markdown("""
       border-radius: 8px;
       padding: 1rem;
       width: fit-content !important;
-      margin: 1rem auto !important;    /* center horizontally and add top/bottom space */
+      margin: 1rem auto !important;
+      color: black !important; /* força contraste */
+    }
+    .element-container:has(.stMetric) {
+      display: flex;
+      justify-content: center;
     }
   </style>
 """, unsafe_allow_html=True)
+
 
 # ── 2. PAGE NAVIGATION ─────────────────────────────────────
 pages = ["Home", "Dataset", "Notebook"]
