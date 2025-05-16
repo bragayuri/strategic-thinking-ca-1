@@ -100,4 +100,4 @@ This project is for educational and prototyping purposes only. Dataset used unde
 
 ---
 
-Made with by Yuri Braga
+Made by Yuri Braga
