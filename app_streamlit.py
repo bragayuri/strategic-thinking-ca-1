@@ -47,7 +47,7 @@ def load_model():
     url = f"https://drive.google.com/uc?id={file_id}"
 
     if not os.path.exists(local_path) or os.path.getsize(local_path) < 1000000:
-        with st.spinner("🔽 Downloading model..."):
+        with st.spinner(" Downloading model..."):
             gdown.download(url, local_path, quiet=False)
 
     return joblib.load(local_path)
